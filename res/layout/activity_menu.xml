@@ -1,0 +1,72 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context=".MenuActivity" >
+
+   <LinearLayout
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content"
+       android:weightSum="200"
+       android:layout_alignParentBottom="true"
+       android:layout_alignParentLeft="true"
+       android:layout_alignParentRight="true"
+       android:layout_alignParentTop="true"
+       android:orientation="vertical" >
+
+       <TextView
+           android:id="@+id/textViewmenu"
+           android:layout_width="match_parent"
+           android:layout_height="wrap_content"
+           android:layout_marginTop="10dp"
+           android:text="Consignes"
+           android:textAppearance="?android:attr/textAppearanceLarge"
+           android:textColor="@color/black" />
+
+       <ListView
+           android:id="@+id/listView1"
+           android:layout_width="match_parent"
+           android:layout_height="182dp"
+           android:textColor="@color/white" >
+       </ListView>
+
+       <Button
+           android:id="@+id/startbutton"
+           android:layout_width="match_parent"
+           android:layout_height="wrap_content"
+           android:layout_weight="20"
+           android:layout_marginTop="30dp"
+           android:text="Commencer"
+           android:background="@color/blue"
+           android:textColor="@color/white" />
+
+       <Button
+           android:id="@+id/scoresbutton"
+           android:layout_width="match_parent"
+           android:layout_height="wrap_content"
+           android:layout_weight="20"
+           android:text="Meilleurs scores"
+           android:background="@color/yellow"
+           android:textColor="@color/white" />
+
+       <Button
+           android:id="@+id/sendbutton"
+           android:layout_width="match_parent"
+           android:layout_height="wrap_content"
+           android:layout_weight="20"
+           android:text="Envoyer les résultats"
+           android:background="@color/red"
+           android:textColor="@color/white" />
+
+       <Button
+           android:id="@+id/buttonchangesettings"
+           android:layout_width="match_parent"
+           android:layout_height="wrap_content"
+           android:layout_weight="20"
+           android:textColor="@color/white"
+           android:background="@color/green"
+           android:text="@string/button_menu_settings" />
+   </LinearLayout>
+
+</RelativeLayout>

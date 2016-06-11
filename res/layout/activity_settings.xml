@@ -1,0 +1,37 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context=".MenuActivity" >
+       <TextView
+           android:id="@+id/textViewNom"
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:text="@string/settings_name"
+           android:textAppearance="?android:attr/textAppearanceMedium"
+           android:textColor="@color/black" />
+
+       <EditText
+           android:id="@+id/edittextnom"
+           android:layout_width="match_parent"
+           android:layout_height="wrap_content"
+           android:layout_alignParentLeft="true"
+           android:layout_below="@+id/textViewNom"
+           android:ems="10"
+           android:inputType="textPersonName"
+           android:textColor="@color/black" >
+
+           <requestFocus />
+       </EditText>
+
+       <Button
+           android:id="@+id/buttonsaveandback"
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:layout_alignParentRight="true"
+           android:layout_below="@+id/edittextnom"
+           android:text="@string/button_settings_back"
+           android:textColor="@color/white" />
+
+</RelativeLayout>

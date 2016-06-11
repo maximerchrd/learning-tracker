@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SciQuiz</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="menu_settings">Paramètres</string>
+    <string name="str_next">Next</string>
+    <string name="title_activity_result">Résultats</string>
+    <string name="title_activity_quiz">Quiz</string>
+    <string name="title_activity_scores">Meilleurs Scores</string>
+    <string name="title_activity_settings">Données persos</string>
+    <string name="title_activity_client">Réseau</string>
+    <string name="title_activity_question">Question</string>
+    <string name="menu_score">score:</string>
+    <string name="menu_level">niveau:</string>
+    <string name="settings_name">Nom</string>
+    <string name="button_settings_back">Sauver et revenir</string>
+    <string name="button_menu_settings">Données persos</string>
+    <string name="button_result_back">Retourner au menu</string>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="grey">#303030</color>
+    <color name="blue">#00CCCB</color>
+    <color name="yellow">#E8D630</color>
+    <color name="red">#F7230C</color>
+    <color name="green">#57D53B</color>
+</resources>
