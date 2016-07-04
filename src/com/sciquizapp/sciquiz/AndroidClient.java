@@ -76,9 +76,7 @@ public class AndroidClient extends Activity {
 					DataInputStream dataInputStream = null;
 
 					try {
-						//socket = new Socket(textIp.getText().toString(), 8888);
-						//socket = new Socket("10.0.2.2", 8080);
-						if (bun == null) {
+						if (bun == null) {  //useless because Sendasynctask only lauched if bun!=null ???
 							socket = new Socket("192.168.43.72", 8080);
 							dataOutputStream = new DataOutputStream(socket.getOutputStream());
 							dataInputStream = new DataInputStream(socket.getInputStream());
