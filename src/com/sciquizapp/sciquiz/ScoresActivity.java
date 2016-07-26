@@ -9,8 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import com.sciquizapp.sciquiz.R;
-
 import android.widget.ExpandableListView;
  
 public class ScoresActivity extends Activity {

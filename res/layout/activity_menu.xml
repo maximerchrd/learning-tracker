@@ -51,11 +51,11 @@
            android:textColor="@color/white" />
 
        <Button
-           android:id="@+id/sendbutton"
+           android:id="@+id/interactivemodebutton"
            android:layout_width="match_parent"
            android:layout_height="wrap_content"
            android:layout_weight="20"
-           android:text="Envoyer les résultats"
+           android:text="Mode intéractif"
            android:background="@color/red"
            android:textColor="@color/white" />
 

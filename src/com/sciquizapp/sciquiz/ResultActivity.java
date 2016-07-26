@@ -1,7 +1,5 @@
 package com.sciquizapp.sciquiz;
 
-import com.sciquizapp.sciquiz.R;
-
 import android.os.Bundle;
 import android.app.Activity;
 import android.view.Menu;

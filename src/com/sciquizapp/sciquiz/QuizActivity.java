@@ -5,8 +5,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import com.sciquizapp.sciquiz.R;
-
 
 import android.os.Bundle;
 import android.annotation.SuppressLint;

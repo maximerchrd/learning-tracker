@@ -1,7 +1,5 @@
 package com.sciquizapp.sciquiz;
 
-import com.sciquizapp.sciquiz.R;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;

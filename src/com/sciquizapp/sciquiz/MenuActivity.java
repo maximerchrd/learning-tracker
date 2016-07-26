@@ -10,7 +10,6 @@ import javax.mail.AuthenticationFailedException;
 import javax.mail.MessagingException;
 
 import com.sciquizapp.sciquiz.BuildConfig;
-import com.sciquizapp.sciquiz.R;
 
 
 import android.app.Activity;
@@ -33,7 +32,7 @@ import android.provider.Settings.Secure;
 import android.view.ViewGroup;
 
 public class MenuActivity extends Activity {
-	Button startButton, scoresButton, sendButton, buttonChangeSettings;
+	Button startButton, scoresButton, sendButton, buttonChangeSettings, interactiveModeButton;
 	TextView consignes;
 	ListView listSubjects;
 	Boolean resultsSent = false;
@@ -44,7 +43,8 @@ public class MenuActivity extends Activity {
 		setContentView(R.layout.activity_menu);
 		startButton = (Button)findViewById(R.id.startbutton);
 		scoresButton = (Button)findViewById(R.id.scoresbutton);
-		sendButton = (Button)findViewById(R.id.sendbutton);
+		//sendButton = (Button)findViewById(R.id.sendbutton);
+		interactiveModeButton = (Button)findViewById(R.id.interactivemodebutton);
 		buttonChangeSettings = (Button)findViewById(R.id.buttonchangesettings);
 		consignes = (TextView) findViewById(R.id.textViewmenu);
 		listSubjects = (ListView) findViewById(R.id.listView1);
@@ -65,7 +65,7 @@ public class MenuActivity extends Activity {
 		params.setMargins(width / 40, height / 200, width / 40, height / 200);  //left, top, right, bottom
 		startButton.setLayoutParams(params);
 		scoresButton.setLayoutParams(params);
-		sendButton.setLayoutParams(params);
+		interactiveModeButton.setLayoutParams(params);
 		buttonChangeSettings.setLayoutParams(params);
 
 		// Define a new Adapter:  First parameter - Context; Second parameter - Layout for the row,
@@ -128,10 +128,10 @@ public class MenuActivity extends Activity {
 
 		
 		//start test interactive questions session
-		sendButton.setOnClickListener(new View.OnClickListener() {		
+		interactiveModeButton.setOnClickListener(new View.OnClickListener() {		
 			@Override
 			public void onClick(View v) {
-				Intent intent = new Intent(MenuActivity.this, AndroidClient.class);
+				Intent intent = new Intent(MenuActivity.this, BluetoothClientActivity.class);
 				startActivity(intent);
 			}
 		});

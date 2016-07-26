@@ -10,6 +10,7 @@
     <string name="title_activity_settings">Données persos</string>
     <string name="title_activity_client">Réseau</string>
     <string name="title_activity_question">Question</string>
+    <string name="title_activity_bluetoothclient">Mode intéractif</string>
     <string name="menu_score">score:</string>
     <string name="menu_level">niveau:</string>
     <string name="settings_name">Nom</string>
