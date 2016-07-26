@@ -53,6 +53,10 @@
             android:name="com.sciquizapp.sciquiz.BluetoothClientActivity"
             android:label="@string/title_activity_bluetoothclient" >
         </activity>
+        <activity
+            android:name="com.sciquizapp.sciquiz.SingleQuestionActivity"
+            android:label="@string/title_activity_question" >
+        </activity>
     </application>
 
 </manifest>

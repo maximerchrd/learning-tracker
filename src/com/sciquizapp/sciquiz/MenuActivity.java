@@ -127,7 +127,7 @@ public class MenuActivity extends Activity {
 		});
 
 		
-		//start test interactive questions session
+		//start interactive questions session
 		interactiveModeButton.setOnClickListener(new View.OnClickListener() {		
 			@Override
 			public void onClick(View v) {

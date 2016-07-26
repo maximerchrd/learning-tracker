@@ -63,12 +63,7 @@ public class BluetoothClientActivity extends Activity {
 		btAdapter = BluetoothAdapter.getDefaultAdapter();
 		CheckBTState();
 		
-		//File imgFile = new  File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath()+"/ap11.jpg");
 		picture = (ImageView)findViewById(R.id.imageview);
-		//int imageResource = getResources().getIdentifier("res/drawable/small.jpg", null, getPackageName());
-		//String path = Environment.DIRECTORY_DCIM+"/ice_maze";
-		//Bitmap image = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-		//picture.setImageBitmap(image);
 	}
 
 	public void onStart() {
@@ -115,7 +110,7 @@ public class BluetoothClientActivity extends Activity {
 		}
 
 		//test if socket open. if not, stops executing onresume()
-		//if(btSocket.isConnected()) {
+		if(btSocket.isConnected()) {
 			// Create a data stream so we can talk to server.
 			out.append("\n...Sending message to server...");
 			String message = "Hello from Android.\n";
@@ -172,14 +167,26 @@ public class BluetoothClientActivity extends Activity {
 				ByteArrayInputStream inputStream = new ByteArrayInputStream(imageBuffer);
 				Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
 				//picture = (ImageView)findViewById(R.id.imageview);
-				picture.setImageBitmap(bitmap);			
+				picture.setImageBitmap(bitmap);		
+				SaveImageFile(bitmap, "imagename.jpg");
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		//} else {
-		//	out.append("\n...socket not connected...");
-		//}
+			//launches question activity
+			Intent mIntent = new Intent(this, SingleQuestionActivity.class);
+			Bundle bun = new Bundle();
+			bun.putString("question", "this is the question");
+			bun.putString("optA", "optA");
+			bun.putString("optB", "optB");
+			bun.putString("optC", "optC");
+			bun.putString("optD", "optD");
+			bun.putString("image_name", "imagename.jpg");
+			mIntent.putExtras(bun);
+			startActivity(mIntent);
+		} else {
+			out.append("\n...socket not connected...");
+		}
 	}
 
 	public void onPause() {
@@ -242,6 +249,27 @@ public class BluetoothClientActivity extends Activity {
 				finish();
 			}
 		}).show();
+	}
+	private void SaveImageFile(Bitmap imageToSave, String fileName) {
+
+	    File directory = new File(getFilesDir(),"images");
+	    String path = getFilesDir().getAbsolutePath();
+	    if (!directory.exists()) {
+	    	directory.mkdirs();
+	    }
+
+	    File file = new File(directory,fileName);
+	    if (file.exists()) {
+	        file.delete();
+	    }
+	    try {
+	        FileOutputStream out = new FileOutputStream(file);
+	        imageToSave.compress(Bitmap.CompressFormat.JPEG, 100, out);
+	        out.flush();
+	        out.close();
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
 	}
 }
 

@@ -158,7 +158,7 @@ public class QuizActivity extends Activity {
 							qid = 0;
 							currentQ = quesList3.get(qid);
 							level = 3;
-							Toast toast = Toast.makeText(getApplicationContext(), "Bien jouÃ©! \n Vous passez au niveau 3", Toast.LENGTH_SHORT);
+							Toast toast = Toast.makeText(getApplicationContext(), "Bien joué! \n Vous passez au niveau 3", Toast.LENGTH_SHORT);
 							LinearLayout toastLayout = (LinearLayout) toast.getView();
 							TextView toastTV = (TextView) toastLayout.getChildAt(0);
 							toastTV.setTextSize(30);
@@ -251,7 +251,7 @@ public class QuizActivity extends Activity {
 							qid = 0;
 							currentQ = quesList2.get(qid);
 							level = 2;
-							Toast toast = Toast.makeText(getApplicationContext(), "Bien jouÃ©! \n Vous passez au niveau 2", Toast.LENGTH_SHORT);
+							Toast toast = Toast.makeText(getApplicationContext(), "Bien joué! \n Vous passez au niveau 2", Toast.LENGTH_SHORT);
 							LinearLayout toastLayout = (LinearLayout) toast.getView();
 							TextView toastTV = (TextView) toastLayout.getChildAt(0);
 							toastTV.setTextSize(30);
@@ -276,7 +276,7 @@ public class QuizActivity extends Activity {
 							qid = 0;
 							currentQ = quesList3.get(qid);
 							level = 3;
-							Toast toast = Toast.makeText(getApplicationContext(), "Bien jouÃ©! \n Vous passez au niveau 3", Toast.LENGTH_SHORT);
+							Toast toast = Toast.makeText(getApplicationContext(), "Bien joué! \n Vous passez au niveau 3", Toast.LENGTH_SHORT);
 							LinearLayout toastLayout = (LinearLayout) toast.getView();
 							TextView toastTV = (TextView) toastLayout.getChildAt(0);
 							toastTV.setTextSize(30);
@@ -368,7 +368,7 @@ public class QuizActivity extends Activity {
 							qid = 0;
 							currentQ = quesList2.get(qid);
 							level = 2;
-							Toast toast = Toast.makeText(getApplicationContext(), "Bien jouÃ©! \n Vous passez au niveau 2", Toast.LENGTH_SHORT);
+							Toast toast = Toast.makeText(getApplicationContext(), "Bien joué! \n Vous passez au niveau 2", Toast.LENGTH_SHORT);
 							LinearLayout toastLayout = (LinearLayout) toast.getView();
 							TextView toastTV = (TextView) toastLayout.getChildAt(0);
 							toastTV.setTextSize(30);
@@ -393,7 +393,7 @@ public class QuizActivity extends Activity {
 							qid = 0;
 							currentQ = quesList3.get(qid);
 							level = 3;
-							Toast toast = Toast.makeText(getApplicationContext(), "Bien jouÃ©! \n Vous passez au niveau 3", Toast.LENGTH_SHORT);
+							Toast toast = Toast.makeText(getApplicationContext(), "Bien joué! \n Vous passez au niveau 3", Toast.LENGTH_SHORT);
 							LinearLayout toastLayout = (LinearLayout) toast.getView();
 							TextView toastTV = (TextView) toastLayout.getChildAt(0);
 							toastTV.setTextSize(30);
@@ -485,7 +485,7 @@ public class QuizActivity extends Activity {
 							qid = 0;
 							currentQ = quesList2.get(qid);
 							level = 2;
-							Toast toast = Toast.makeText(getApplicationContext(), "Bien jouÃ©! \n Vous passez au niveau 2", Toast.LENGTH_SHORT);
+							Toast toast = Toast.makeText(getApplicationContext(), "Bien joué! \n Vous passez au niveau 2", Toast.LENGTH_SHORT);
 							LinearLayout toastLayout = (LinearLayout) toast.getView();
 							TextView toastTV = (TextView) toastLayout.getChildAt(0);
 							toastTV.setTextSize(30);
@@ -510,7 +510,7 @@ public class QuizActivity extends Activity {
 							qid = 0;
 							currentQ = quesList3.get(qid);
 							level = 3;
-							Toast toast = Toast.makeText(getApplicationContext(), "Bien jouÃ©! \n Vous passez au niveau 3", Toast.LENGTH_SHORT);
+							Toast toast = Toast.makeText(getApplicationContext(), "Bien joué! \n Vous passez au niveau 3", Toast.LENGTH_SHORT);
 							LinearLayout toastLayout = (LinearLayout) toast.getView();
 							TextView toastTV = (TextView) toastLayout.getChildAt(0);
 							toastTV.setTextSize(30);
