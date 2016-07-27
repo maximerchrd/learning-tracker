@@ -39,6 +39,7 @@ public class BluetoothClientActivity extends Activity {
 	private BluetoothSocket btSocket = null;
 	private OutputStream outStream = null;
 	private int current = 0; //tells where is the "cursor" when reading a file
+	private String question_text_string = "";
 	public final static int FILE_SIZE = 7737; // file size temporary hard coded
 	// should bigger than the file to be downloaded
 
@@ -135,32 +136,46 @@ public class BluetoothClientActivity extends Activity {
 				AlertBox("Fatal Error", msg);       
 			}
 
+			//reception of the question sent by the server per BT
 			InputStream inStream = null;
-			
 			
 			try {
 				inStream = btSocket.getInputStream();
 				//BufferedReader bReader = new BufferedReader(new InputStreamReader(inStream));
 				//String lineRead = bReader.readLine();
-				byte[] stringBuffer = new byte[100];
+				byte[] stringBuffer = new byte[20];
 				int sizeRead = 0;
 				
+				//reads the sizes of the text and of the imagefile
 				do {
-					sizeRead = inStream.read(stringBuffer, current, (100 - current));
+					sizeRead = inStream.read(stringBuffer, current, (20 - current));
 				    if(sizeRead >= 0) current += sizeRead;
 				} while(sizeRead > 0);    //shall be sizeRead > -1, because .read returns -1 when finished reading, but outstream not closed on server side
 				
-				String string_file_size = new String(stringBuffer, "UTF-8");
-				int file_size = Integer.parseInt(string_file_size.replaceAll("[\\D]", ""));
+				String string_sizes = new String(stringBuffer, "UTF-8");
+				String string_file_size = string_sizes.split(":")[0];
+				String string_text_size = string_sizes.split(":")[1];
+				int text_size = Integer.parseInt(string_text_size.replaceAll("[\\D]", ""));
+				int file_size = Integer.parseInt(string_file_size);
+				
+				//reads the text
+				byte [] textBuffer = new byte[text_size];
+				byte[] inputBuffer = new byte[20+text_size+file_size];
+
+				do {
+					sizeRead = inStream.read(inputBuffer, current, (20 + text_size + file_size - current));
+				    if(sizeRead >= 0) current += sizeRead;
+				} while(sizeRead > 0);    //shall be sizeRead > -1, because .read returns -1 when finished reading, but outstream not closed on server side
+				
+				for (int i = 0; i < text_size; i++) {
+					textBuffer[i] = inputBuffer[i+20];
+				}
+				question_text_string = new String(textBuffer, "UTF-8");
+				
+				//copy the file from inputbuffer the imagebuffer !!! large files throw an arrayoutofbonds exception (tested up to ~600 ko)
 				byte [] imageBuffer = new byte[file_size];
-				byte[] inputBuffer = new byte[100+file_size];
-				do {
-					sizeRead = inStream.read(inputBuffer, current, (100 + file_size - current));
-				    if(sizeRead >= 0) current += sizeRead;
-				} while(sizeRead > 0);    //shall be sizeRead > -1, because .read returns -1 when finished reading, but outstream not closed on server side
-				
-				for (int i = 100; i < file_size + 100; i++) {
-					imageBuffer[i-100] = inputBuffer[i];
+				for (int i = 0; i < file_size; i++) {
+					imageBuffer[i] = inputBuffer[i+20+text_size];
 				}
 				//String inputMsg = new String(inputBuffer,"US-ASCII");
 				//out.append("\n...this is the line read: "+ inputMsg +"\n");
@@ -168,20 +183,21 @@ public class BluetoothClientActivity extends Activity {
 				Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
 				//picture = (ImageView)findViewById(R.id.imageview);
 				picture.setImageBitmap(bitmap);		
-				SaveImageFile(bitmap, "imagename.jpg");
+				SaveImageFile(bitmap, question_text_string.split("///")[5]);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			
 			//launches question activity
 			Intent mIntent = new Intent(this, SingleQuestionActivity.class);
 			Bundle bun = new Bundle();
-			bun.putString("question", "this is the question");
-			bun.putString("optA", "optA");
-			bun.putString("optB", "optB");
-			bun.putString("optC", "optC");
-			bun.putString("optD", "optD");
-			bun.putString("image_name", "imagename.jpg");
+			bun.putString("question", question_text_string.split("///")[0]);
+			bun.putString("optA", question_text_string.split("///")[1]);
+			bun.putString("optB", question_text_string.split("///")[2]);
+			bun.putString("optC", question_text_string.split("///")[3]);
+			bun.putString("optD", question_text_string.split("///")[4]);
+			bun.putString("image_name", question_text_string.split("///")[5]);
 			mIntent.putExtras(bun);
 			startActivity(mIntent);
 		} else {
