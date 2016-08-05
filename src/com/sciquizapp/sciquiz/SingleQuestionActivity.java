@@ -71,6 +71,9 @@ public class SingleQuestionActivity extends Activity {
 			}
 		});
 
+		//get bluetooth client object
+//		final BluetoothClientActivity bluetooth = (BluetoothClientActivity)getIntent().getParcelableExtra("bluetoothObject");
+		
 		//get question from the bundle
 		Bundle bun = getIntent().getExtras();
 		String question = bun.getString("question");
@@ -79,26 +82,33 @@ public class SingleQuestionActivity extends Activity {
 		String optC = bun.getString("optC");
 		String optD = bun.getString("optD");
 		String image_path = bun.getString("image_name");
+//		final BluetoothClientActivity bluetooth = bun.getParcelable("bluetoothObject");
+		final BluetoothClientActivity bluetooth = new BluetoothClientActivity();
 		currentQ = new Question("chimie","1",question,optA,optB,optC,optD,optA,image_path);
 		setQuestionView();
+		
 
 		answerButton1.setOnClickListener(new View.OnClickListener() {		
 			@SuppressLint("SimpleDateFormat") @Override
 			public void onClick(View v) {
-				Intent intent = new Intent(SingleQuestionActivity.this, AndroidClient.class);
-				Bundle b = new Bundle();
-				//questionID = Integer.parseInt(incomingMessage);
-				b.putString("question", currentQ.getQUESTION());
-				b.putString("answer", String.valueOf(answerButton1.getText()));
-				if (answerButton1.getText().toString().matches(currentQ.getANSWER())) {
-					b.putString("result", "right");
-				} else {
-					b.putString("result", "wrong");
-				}
-				intent.putExtras(b);
-				startActivity(intent);
+//				Intent intent = new Intent(SingleQuestionActivity.this, AndroidClient.class);
+//				Bundle b = new Bundle();
+//				b.putString("question", currentQ.getQUESTION());
+//				b.putString("answer", String.valueOf(answerButton1.getText()));
+//				if (answerButton1.getText().toString().matches(currentQ.getANSWER())) {
+//					b.putString("result", "right");
+//				} else {
+//					b.putString("result", "wrong");
+//				}
+//				intent.putExtras(b);
+//				startActivity(intent);
+//				finish();
+//				invalidateOptionsMenu();
+				
+				//first we have to get the bluetoothclientactivity object from the one launching the activity question
+				
+				bluetooth.sendAnswerToServer(String.valueOf(answerButton1.getText()));
 				finish();
-				invalidateOptionsMenu();
 			}
 		});
 		answerButton2.setOnClickListener(new View.OnClickListener() {		
@@ -106,7 +116,6 @@ public class SingleQuestionActivity extends Activity {
 			public void onClick(View v) {
 				Intent intent = new Intent(SingleQuestionActivity.this, AndroidClient.class);
 				Bundle b = new Bundle();
-				//questionID = Integer.parseInt(incomingMessage);
 				b.putString("answer", String.valueOf(answerButton2.getText()));
 				intent.putExtras(b);
 				startActivity(intent);

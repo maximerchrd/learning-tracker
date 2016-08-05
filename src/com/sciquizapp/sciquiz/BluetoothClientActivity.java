@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.UUID;
 
 import android.app.Activity;
@@ -26,30 +27,37 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.os.SystemClock;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-public class BluetoothClientActivity extends Activity {
+public class BluetoothClientActivity extends Activity implements Parcelable{			//serializable: to pass object to other class
 	TextView out;
 	TextView wait_for_question;
 	ImageView picture;
-	private static final int REQUEST_ENABLE_BT = 1;
+	private static final int REQUEST_ENABLE_BT = 1;	
 	private BluetoothAdapter btAdapter = null;
-	private BluetoothSocket btSocket = null;
+	private static BluetoothSocket btSocket = null;
 	private OutputStream outStream = null;
 	private int current = 0; //tells where is the "cursor" when reading a file
 	private String question_text_string = "";
-	public final static int FILE_SIZE = 7737; // file size temporary hard coded
-	// should bigger than the file to be downloaded
 
 	// Well known SPP UUID
-	private static final UUID MY_UUID =
+	private static final UUID MY_UUID =	
 			UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-	
-	// Insert your server's MAC address
-	private static String address = "C0:33:5E:11:B6:16";
 
+	// Insert your server's MAC address
+	private  static String address = "C0:33:5E:11:B6:16";	
+
+	public BluetoothClientActivity() {
+
+	}
+	public BluetoothClientActivity(Parcel in) {
+		//just to declare a constructor with Parcel as argument
+
+	}
 	/** Called when the activity is first created. */
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -63,8 +71,8 @@ public class BluetoothClientActivity extends Activity {
 
 		btAdapter = BluetoothAdapter.getDefaultAdapter();
 		CheckBTState();
-		
-		picture = (ImageView)findViewById(R.id.imageview);
+
+
 	}
 
 	public void onStart() {
@@ -74,134 +82,180 @@ public class BluetoothClientActivity extends Activity {
 
 	public void onResume() {
 		super.onResume();
+		if (btSocket == null) {
+			out.append("\n...In onResume...\n...Attempting client connect...");
+			//for later: automatically pair the devices
 
-		out.append("\n...In onResume...\n...Attempting client connect...");
+			// Set up a pointer to the remote node using its address.
+			BluetoothDevice device = btAdapter.getRemoteDevice(address);
 
-		//for later: automatically pair the devices
-
-		// Set up a pointer to the remote node using its address.
-		BluetoothDevice device = btAdapter.getRemoteDevice(address);
-
-		// Two things are needed to make a connection:
-		//   A MAC address, which we got above.
-		//   A Service ID or UUID.  In this case we are using the
-		//     UUID for SPP.
-		try {
-			btSocket = device.createRfcommSocketToServiceRecord(MY_UUID);
-			//btSocket = device.createInsecureRfcommSocketToServiceRecord(MY_UUID);
-		} catch (IOException e) {
-			AlertBox("Fatal Error", "In onResume() and socket create failed: " + e.getMessage() + ".");
-		}
-
-		// Discovery is resource intensive.  Make sure it isn't going on
-		// when you attempt to connect and pass your message.
-		btAdapter.cancelDiscovery();
-
-		// Establish the connection.  This will block until it connects.
-		try {
-			btSocket.connect();
-			out.append("\n...Connection established and data link opened...");
-		} catch (IOException e) {
-			e.printStackTrace();
+			// Two things are needed to make a connection:
+			//   A MAC address, which we got above.
+			//   A Service ID or UUID.  In this case we are using the
+			//     UUID for SPP.
 			try {
-				btSocket.close();
-			} catch (IOException e2) {
-				AlertBox("Fatal Error", "In onResume() and unable to close socket during connection failure" + e2.getMessage() + ".");
+				btSocket = device.createRfcommSocketToServiceRecord(MY_UUID);
+				//btSocket = device.createInsecureRfcommSocketToServiceRecord(MY_UUID);
+			} catch (IOException e) {
+				AlertBox("Fatal Error", "In onResume() and socket create failed: " + e.getMessage() + ".");
+			}
+
+			// Discovery is resource intensive.  Make sure it isn't going on
+			// when you attempt to connect and pass your message.
+			btAdapter.cancelDiscovery();
+
+			// Establish the connection.  This will block until it connects.
+			try {
+				btSocket.connect();
+				out.append("\n...Connection established and data link opened...");
+			} catch (IOException e) {
+				e.printStackTrace();
+				try {
+					btSocket.close();
+				} catch (IOException e2) {
+					AlertBox("Fatal Error", "In onResume() and unable to close socket during connection failure" + e2.getMessage() + ".");
+				}
+			}
+
+			//test if socket open. if not, stops executing onresume()
+			if(btSocket.isConnected()) {
+				// Create a data stream so we can talk to server.
+				out.append("\n...Sending message to server...");
+				String message = "Hello from Android.\n";
+				out.append("\n\n...The message that we will send to the server is: "+message);
+
+				try {
+					outStream = btSocket.getOutputStream();
+				} catch (IOException e) {
+					AlertBox("Fatal Error", "In onResume() and output stream creation failed:" + e.getMessage() + ".");
+				}
+
+
+				byte[] msgBuffer = message.getBytes();
+				try {
+					outStream.write(msgBuffer);
+				} catch (IOException e) {
+					String msg = "In onResume() and an exception occurred during write: " + e.getMessage();
+					if (address.equals("00:00:00:00:00:00")) 
+						msg = msg + ".\n\nUpdate your server address from 00:00:00:00:00:00 to the correct address on line 37 in the java code";
+					msg = msg +  ".\n\nCheck that the SPP UUID: " + MY_UUID.toString() + " exists on server.\nor server not started.\n";
+
+					AlertBox("Fatal Error", msg);       
+				}
+
+				new Thread(new Runnable() {
+					public void run() {
+						while (true) {
+							//reception of the question sent by the server per BT
+							questionReception();
+
+							//launches question activity
+							launchQuestionActivity();
+						}
+					}
+				}).start();
+
+			} else {
+				out.append("\n...socket not connected...");
 			}
 		}
+	}
 
-		//test if socket open. if not, stops executing onresume()
+	/**
+	 * method used to send some string to the server. The BT connection
+	 * has to be open.
+	 */
+	public void sendAnswerToServer(String answer) {
 		if(btSocket.isConnected()) {
-			// Create a data stream so we can talk to server.
-			out.append("\n...Sending message to server...");
-			String message = "Hello from Android.\n";
-			out.append("\n\n...The message that we will send to the server is: "+message);
-
 			try {
 				outStream = btSocket.getOutputStream();
 			} catch (IOException e) {
 				AlertBox("Fatal Error", "In onResume() and output stream creation failed:" + e.getMessage() + ".");
 			}
 
-
-			byte[] msgBuffer = message.getBytes();
+			byte[] ansBuffer = answer.getBytes();
 			try {
-				outStream.write(msgBuffer);
+				outStream.write(ansBuffer);
 			} catch (IOException e) {
-				String msg = "In onResume() and an exception occurred during write: " + e.getMessage();
+				String msg = "In sendAnswerToServer() and an exception occurred during write: " + e.getMessage();
 				if (address.equals("00:00:00:00:00:00")) 
 					msg = msg + ".\n\nUpdate your server address from 00:00:00:00:00:00 to the correct address on line 37 in the java code";
 				msg = msg +  ".\n\nCheck that the SPP UUID: " + MY_UUID.toString() + " exists on server.\nor server not started.\n";
 
 				AlertBox("Fatal Error", msg);       
 			}
-
-			//reception of the question sent by the server per BT
-			InputStream inStream = null;
-			
-			try {
-				inStream = btSocket.getInputStream();
-				//BufferedReader bReader = new BufferedReader(new InputStreamReader(inStream));
-				//String lineRead = bReader.readLine();
-				byte[] stringBuffer = new byte[20];
-				int sizeRead = 0;
-				
-				//reads the sizes of the text and of the imagefile
-				do {
-					sizeRead = inStream.read(stringBuffer, current, (20 - current));
-				    if(sizeRead >= 0) current += sizeRead;
-				} while(sizeRead > 0);    //shall be sizeRead > -1, because .read returns -1 when finished reading, but outstream not closed on server side
-				
-				String string_sizes = new String(stringBuffer, "UTF-8");
-				String string_file_size = string_sizes.split(":")[0];
-				String string_text_size = string_sizes.split(":")[1];
-				int text_size = Integer.parseInt(string_text_size.replaceAll("[\\D]", ""));
-				int file_size = Integer.parseInt(string_file_size);
-				
-				//reads the text
-				byte [] textBuffer = new byte[text_size];
-				byte[] inputBuffer = new byte[20+text_size+file_size];
-
-				do {
-					sizeRead = inStream.read(inputBuffer, current, (20 + text_size + file_size - current));
-				    if(sizeRead >= 0) current += sizeRead;
-				} while(sizeRead > 0);    //shall be sizeRead > -1, because .read returns -1 when finished reading, but outstream not closed on server side
-				
-				for (int i = 0; i < text_size; i++) {
-					textBuffer[i] = inputBuffer[i+20];
-				}
-				question_text_string = new String(textBuffer, "UTF-8");
-				
-				//copy the file from inputbuffer the imagebuffer !!! large files throw an arrayoutofbonds exception (tested up to ~600 ko)
-				byte [] imageBuffer = new byte[file_size];
-				for (int i = 0; i < file_size; i++) {
-					imageBuffer[i] = inputBuffer[i+20+text_size];
-				}
-				//String inputMsg = new String(inputBuffer,"US-ASCII");
-				//out.append("\n...this is the line read: "+ inputMsg +"\n");
-				ByteArrayInputStream inputStream = new ByteArrayInputStream(imageBuffer);
-				Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-				//picture = (ImageView)findViewById(R.id.imageview);
-				picture.setImageBitmap(bitmap);		
-				SaveImageFile(bitmap, question_text_string.split("///")[5]);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			//launches question activity
-			Intent mIntent = new Intent(this, SingleQuestionActivity.class);
-			Bundle bun = new Bundle();
-			bun.putString("question", question_text_string.split("///")[0]);
-			bun.putString("optA", question_text_string.split("///")[1]);
-			bun.putString("optB", question_text_string.split("///")[2]);
-			bun.putString("optC", question_text_string.split("///")[3]);
-			bun.putString("optD", question_text_string.split("///")[4]);
-			bun.putString("image_name", question_text_string.split("///")[5]);
-			mIntent.putExtras(bun);
-			startActivity(mIntent);
 		} else {
-			out.append("\n...socket not connected...");
+			out.append("\n...socket not connected when trying to send answer...");
+		}
+	}
+	/**
+	 * 
+	 */
+	private void launchQuestionActivity() {
+		Intent mIntent = new Intent(this, SingleQuestionActivity.class);
+		Bundle bun = new Bundle();
+		bun.putString("question", question_text_string.split("///")[0]);
+		bun.putString("optA", question_text_string.split("///")[1]);
+		bun.putString("optB", question_text_string.split("///")[2]);
+		bun.putString("optC", question_text_string.split("///")[3]);
+		bun.putString("optD", question_text_string.split("///")[4]);
+		bun.putString("image_name", question_text_string.split("///")[5]);
+		//		bun.putParcelable("bluetoothSocket", btSocket);
+		bun.putParcelable("bluetoothObject", this);
+		mIntent.putExtras(bun);
+		startActivity(mIntent);
+	}
+
+	/**
+	 * 
+	 */
+	private void questionReception() {
+		InputStream inStream = null;
+		current = 0;
+		try {
+			inStream = btSocket.getInputStream();
+
+			//reads the sizes of the text and of the imagefile
+			byte[] stringBuffer = new byte[20];
+			int sizeRead = 0;
+			do {
+				sizeRead = inStream.read(stringBuffer, current, (20 - current));
+				if(sizeRead >= 0) current += sizeRead;
+			} while(sizeRead > 0);    //shall be sizeRead > -1, because .read returns -1 when finished reading, but outstream not closed on server side
+
+			String string_sizes = new String(stringBuffer, "UTF-8");
+			String string_file_size = string_sizes.split(":")[0];
+			String string_text_size = string_sizes.split(":")[1];
+			int text_size = Integer.parseInt(string_text_size.replaceAll("[\\D]", ""));
+			int file_size = Integer.parseInt(string_file_size);
+
+			//reads the text
+			byte [] textBuffer = new byte[text_size];
+			byte[] inputBuffer = new byte[20+text_size+file_size];
+
+			do {
+				sizeRead = inStream.read(inputBuffer, current, (20 + text_size + file_size - current));
+				if(sizeRead >= 0) current += sizeRead;
+			} while(sizeRead > 0);    //shall be sizeRead > -1, because .read returns -1 when finished reading, but outstream not closed on server side
+
+			for (int i = 0; i < text_size; i++) {
+				textBuffer[i] = inputBuffer[i+20];
+			}
+			question_text_string = new String(textBuffer, "UTF-8");
+
+			//copy the file from inputbuffer the imagebuffer !!! large files throw an arrayoutofbonds exception (tested up to ~600 ko)
+			byte [] imageBuffer = new byte[file_size];
+			for (int i = 0; i < file_size; i++) {
+				imageBuffer[i] = inputBuffer[i+20+text_size];
+			}
+			ByteArrayInputStream inputStream = new ByteArrayInputStream(imageBuffer);
+			Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+			//			picture = (ImageView)findViewById(R.id.imageview);
+			//			picture.setImageBitmap(bitmap);		
+			SaveImageFile(bitmap, question_text_string.split("///")[5]);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
@@ -211,27 +265,25 @@ public class BluetoothClientActivity extends Activity {
 		//out.append("\n...Hello\n");
 
 		out.append("\n...In onPause()...");
-
-
-
-		if (outStream != null) {
-			try {
-				outStream.flush();
-			} catch (IOException e) {
-				AlertBox("Fatal Error", "In onPause() and failed to flush output stream: " + e.getMessage() + ".");
-			}
-		}
-
-		try     {
-			btSocket.close();
-		} catch (IOException e2) {
-			AlertBox("Fatal Error", "In onPause() and failed to close socket." + e2.getMessage() + ".");
-		}
 	}
 
 	public void onStop() {
 		super.onStop();
 		out.append("\n...In onStop()...");
+
+		//		if (outStream != null) {
+		//			try {
+		//				outStream.flush();
+		//			} catch (IOException e) {
+		//				AlertBox("Fatal Error", "In onPause() and failed to flush output stream: " + e.getMessage() + ".");
+		//			}
+		//		}
+		//
+		//		try     {
+		//			((MyApplication) getApplication()).global_bluetoothSocket.close();
+		//		} catch (IOException e2) {
+		//			AlertBox("Fatal Error", "In onPause() and failed to close socket." + e2.getMessage() + ".");
+		//		}
 	}
 
 	public void onDestroy() {
@@ -268,24 +320,62 @@ public class BluetoothClientActivity extends Activity {
 	}
 	private void SaveImageFile(Bitmap imageToSave, String fileName) {
 
-	    File directory = new File(getFilesDir(),"images");
-	    String path = getFilesDir().getAbsolutePath();
-	    if (!directory.exists()) {
-	    	directory.mkdirs();
-	    }
+		File directory = new File(getFilesDir(),"images");
+		String path = getFilesDir().getAbsolutePath();
+		if (!directory.exists()) {
+			directory.mkdirs();
+		}
 
-	    File file = new File(directory,fileName);
-	    if (file.exists()) {
-	        file.delete();
-	    }
-	    try {
-	        FileOutputStream out = new FileOutputStream(file);
-	        imageToSave.compress(Bitmap.CompressFormat.JPEG, 100, out);
-	        out.flush();
-	        out.close();
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	    }
+		File file = new File(directory,fileName);
+		if (file.exists()) {
+			file.delete();
+		}
+		try {
+			FileOutputStream out = new FileOutputStream(file);
+			imageToSave.compress(Bitmap.CompressFormat.JPEG, 100, out);
+			out.flush();
+			out.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
-}
+	/**
+	 * Define the kind of object that you gonna parcel,
+	 * You can use hashCode() here
+	 */
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+	/**
+	 * Actual object serialization happens here, Write object content
+	 * to parcel, reading should be done according to this write order
+	 * param dest - parcel
+	 * param flags - Additional flags about how the object should be written
+	 */
+	@Override
+	public void writeToParcel(Parcel dest, int flags) {
+		//	    dest.writeString(id);
+		//	    dest.writeString(username);
+		//	    dest.writeString(email);
+		//	    dest.writeString(password);
+	} 
+	/**
+	 * This field is needed for Android to be able to
+	 * create new objects, individually or as arrays
+	 *
+	 * If you don’t do that, Android framework will raises an exception
+	 * Parcelable protocol requires a Parcelable.Creator object 
+	 * called CREATOR
+	 */
+	public static final Parcelable.Creator<BluetoothClientActivity> CREATOR = new Parcelable.Creator<BluetoothClientActivity>() {
 
+		public BluetoothClientActivity createFromParcel(Parcel in) {
+			return new BluetoothClientActivity(in);
+		}
+
+		public BluetoothClientActivity[] newArray(int size) {
+			return new BluetoothClientActivity[size];
+		}
+	};
+}
