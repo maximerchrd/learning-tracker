@@ -83,7 +83,7 @@ public class SingleQuestionActivity extends Activity {
 		String optD = bun.getString("optD");
 		String image_path = bun.getString("image_name");
 //		final BluetoothClientActivity bluetooth = bun.getParcelable("bluetoothObject");
-		final BluetoothClientActivity bluetooth = new BluetoothClientActivity();
+		final BluetoothCommunication bluetooth = new BluetoothCommunication(getApplicationContext());
 		currentQ = new Question("chimie","1",question,optA,optB,optC,optD,optA,image_path);
 		setQuestionView();
 		
@@ -114,39 +114,22 @@ public class SingleQuestionActivity extends Activity {
 		answerButton2.setOnClickListener(new View.OnClickListener() {		
 			@Override
 			public void onClick(View v) {
-				Intent intent = new Intent(SingleQuestionActivity.this, AndroidClient.class);
-				Bundle b = new Bundle();
-				b.putString("answer", String.valueOf(answerButton2.getText()));
-				intent.putExtras(b);
-				startActivity(intent);
+				bluetooth.sendAnswerToServer(String.valueOf(answerButton2.getText()));
 				finish();
-				invalidateOptionsMenu();
 			}
 		});
 		answerButton3.setOnClickListener(new View.OnClickListener() {		
 			@Override
 			public void onClick(View v) {
-				Intent intent = new Intent(SingleQuestionActivity.this, AndroidClient.class);
-				Bundle b = new Bundle();
-				//questionID = Integer.parseInt(incomingMessage);
-				b.putString("answer", String.valueOf(answerButton3.getText()));
-				intent.putExtras(b);
-				startActivity(intent);
+				bluetooth.sendAnswerToServer(String.valueOf(answerButton3.getText()));
 				finish();
-				invalidateOptionsMenu();
 			}
 		});
 		answerButton4.setOnClickListener(new View.OnClickListener() {		
 			@Override
 			public void onClick(View v) {
-				Intent intent = new Intent(SingleQuestionActivity.this, AndroidClient.class);
-				Bundle b = new Bundle();
-				//questionID = Integer.parseInt(incomingMessage);
-				b.putString("answer", String.valueOf(answerButton4.getText()));
-				intent.putExtras(b);
-				startActivity(intent);
+				bluetooth.sendAnswerToServer(String.valueOf(answerButton4.getText()));
 				finish();
-				invalidateOptionsMenu();
 			}
 		});
 	}
