@@ -1,16 +1,13 @@
 package com.sciquizapp.sciquiz;
 
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.UUID;
 
 import android.app.Activity;
@@ -18,18 +15,17 @@ import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.os.SystemClock;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -43,11 +39,14 @@ public class BluetoothClientActivity extends Activity implements Parcelable{			/
 	private OutputStream outStream = null;
 	private int current = 0; //tells where is the "cursor" when reading a file
 	private String question_text_string = "";
+	private BluetoothCommunication mBTCom;
+	
+
 
 	// Well known SPP UUID
-	private static final UUID MY_UUID =	
-			UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-
+	private static final UUID MY_UUID =	UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+//	private static final UUID MY_UUID =	UUID.fromString("125af5e2-1a2c-6980-c44d-23fd57103e39");
+	
 	// Insert your server's MAC address
 	private  static String address = "C0:33:5E:11:B6:16";	
 
@@ -67,8 +66,9 @@ public class BluetoothClientActivity extends Activity implements Parcelable{			/
 		out = (TextView) findViewById(R.id.out);
 
 		wait_for_question.append("En attente de la question suivante");
-		out.append("\n...In onCreate()...");
+//		out.append("\n...In onCreate()...");
 
+		mBTCom = new BluetoothCommunication(getApplicationContext());
 		btAdapter = BluetoothAdapter.getDefaultAdapter();
 		CheckBTState();
 
@@ -77,46 +77,48 @@ public class BluetoothClientActivity extends Activity implements Parcelable{			/
 
 	public void onStart() {
 		super.onStart();
-		out.append("\n...In onStart()...");
+//		out.append("\n...In onStart()...");
 	}
 
 	public void onResume() {
 		super.onResume();
 		if (btSocket == null) {
-			out.append("\n...In onResume...\n...Attempting client connect...");
+//			out.append("\n...In onResume...\n...Attempting client connect...");
+
 			//for later: automatically pair the devices
-
-			// Set up a pointer to the remote node using its address.
-			BluetoothDevice device = btAdapter.getRemoteDevice(address);
-
-			// Two things are needed to make a connection:
-			//   A MAC address, which we got above.
-			//   A Service ID or UUID.  In this case we are using the
-			//     UUID for SPP.
-			try {
-				btSocket = device.createRfcommSocketToServiceRecord(MY_UUID);
-				//btSocket = device.createInsecureRfcommSocketToServiceRecord(MY_UUID);
-			} catch (IOException e) {
-				AlertBox("Fatal Error", "In onResume() and socket create failed: " + e.getMessage() + ".");
-			}
-
-			// Discovery is resource intensive.  Make sure it isn't going on
-			// when you attempt to connect and pass your message.
-			btAdapter.cancelDiscovery();
-
-			// Establish the connection.  This will block until it connects.
-			try {
-				btSocket.connect();
-				out.append("\n...Connection established and data link opened...");
-			} catch (IOException e) {
-				e.printStackTrace();
-				try {
-					btSocket.close();
-				} catch (IOException e2) {
-					AlertBox("Fatal Error", "In onResume() and unable to close socket during connection failure" + e2.getMessage() + ".");
-				}
-			}
-
+			mBTCom.ConnectToBluetoothMaster(btAdapter);
+			
+//			// Set up a pointer to the remote node using its address.
+////			BluetoothDevice device = btAdapter.getRemoteDevice(mac_adress_list.get(0));
+//			
+//			// Two things are needed to make a connection:
+//			//   A MAC address, which we got above.
+//			//   A Service ID or UUID.  In this case we are using the
+//			//     UUID for SPP.
+//			try {
+//				btSocket = device.createRfcommSocketToServiceRecord(MY_UUID);
+//				//btSocket = device.createInsecureRfcommSocketToServiceRecord(MY_UUID);
+//			} catch (IOException e) {
+//				AlertBox("Fatal Error", "In onResume() and socket create failed: " + e.getMessage() + ".");
+//			}
+//
+//			// Discovery is resource intensive.  Make sure it isn't going on
+//			// when you attempt to connect and pass your message.
+//			btAdapter.cancelDiscovery();
+//
+//			// Establish the connection.  This will block until it connects.
+//			try {
+//				btSocket.connect();
+//				out.append("\n...Connection established and data link opened...");
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//				try {
+//					btSocket.close();
+//				} catch (IOException e2) {
+//					AlertBox("Fatal Error", "In onResume() and unable to close socket during connection failure" + e2.getMessage() + ".");
+//				}
+//			}
+			/*
 			//test if socket open. if not, stops executing onresume()
 			if(btSocket.isConnected()) {
 				// Create a data stream so we can talk to server.
@@ -157,7 +159,7 @@ public class BluetoothClientActivity extends Activity implements Parcelable{			/
 
 			} else {
 				out.append("\n...socket not connected...");
-			}
+			}*/
 		}
 	}
 
@@ -264,12 +266,12 @@ public class BluetoothClientActivity extends Activity implements Parcelable{			/
 
 		//out.append("\n...Hello\n");
 
-		out.append("\n...In onPause()...");
+//		out.append("\n...In onPause()...");
 	}
 
 	public void onStop() {
 		super.onStop();
-		out.append("\n...In onStop()...");
+//		out.append("\n...In onStop()...");
 
 		//		if (outStream != null) {
 		//			try {
@@ -288,7 +290,7 @@ public class BluetoothClientActivity extends Activity implements Parcelable{			/
 
 	public void onDestroy() {
 		super.onDestroy();
-		out.append("\n...In onDestroy()...");
+//		out.append("\n...In onDestroy()...");
 	}
 
 	private void CheckBTState() {
