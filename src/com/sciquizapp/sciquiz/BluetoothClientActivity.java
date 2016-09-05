@@ -40,7 +40,7 @@ public class BluetoothClientActivity extends Activity implements Parcelable{			/
 	private OutputStream outStream = null;
 	private int current = 0; //tells where is the "cursor" when reading a file
 	private String question_text_string = "";
-	private BluetoothCommunication mBTCom;
+	private OldBluetoothCommunication mBTCom;
 	private BroadcastReceiver mActivityReceiver;
 
 
@@ -70,7 +70,7 @@ public class BluetoothClientActivity extends Activity implements Parcelable{			/
 		wait_for_question.append("En attente de la question suivante");
 		//		out.append("\n...In onCreate()...");
 
-		mBTCom = new BluetoothCommunication(this);
+		mBTCom = new OldBluetoothCommunication(this);
 		//		btAdapter = BluetoothAdapter.getDefaultAdapter();
 		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
 			final BluetoothManager mbluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
@@ -202,6 +202,12 @@ public class BluetoothClientActivity extends Activity implements Parcelable{			/
 	public void onDestroy() {
 		super.onDestroy();
 		//		out.append("\n...In onDestroy()...");
+		if (btAdapter.getName().startsWith("prefix")) {
+			String new_name = btAdapter.getName();
+			new_name.replaceFirst("prefix", "");
+			btAdapter.setName(new_name);
+		}
+		
 		this.unregisterReceiver(mActivityReceiver);
 	}
 

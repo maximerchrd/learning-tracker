@@ -131,7 +131,7 @@ public class MenuActivity extends Activity {
 		interactiveModeButton.setOnClickListener(new View.OnClickListener() {		
 			@Override
 			public void onClick(View v) {
-				Intent intent = new Intent(MenuActivity.this, BluetoothClientActivity.class);
+				Intent intent = new Intent(MenuActivity.this, InteractiveModeActivity.class);
 				startActivity(intent);
 			}
 		});

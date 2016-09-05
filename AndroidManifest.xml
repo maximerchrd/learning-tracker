@@ -12,6 +12,12 @@
 	<uses-permission android:name="android.permission.BLUETOOTH"/>
 	<uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+	<uses-permission android:name="android.permission.WRITE_SETTINGS" />  
+	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+	<uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+<!-- 	<uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" /> -->
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
@@ -57,6 +63,10 @@
         <activity
             android:name="com.sciquizapp.sciquiz.SingleQuestionActivity"
             android:label="@string/title_activity_question" >
+        </activity>
+        <activity
+            android:name="com.sciquizapp.sciquiz.InteractiveModeActivity"
+            android:label="@string/title_activity_interactivemode" >
         </activity>
     </application>
 

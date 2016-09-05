@@ -83,9 +83,20 @@ public class SingleQuestionActivity extends Activity {
 		String optD = bun.getString("optD");
 		String image_path = bun.getString("image_name");
 //		final BluetoothClientActivity bluetooth = bun.getParcelable("bluetoothObject");
-		final BluetoothCommunication bluetooth = new BluetoothCommunication(getApplicationContext());
+		final OldBluetoothCommunication bluetooth = new OldBluetoothCommunication(getApplicationContext());
 		currentQ = new Question("chimie","1",question,optA,optB,optC,optD,optA,image_path);
 		setQuestionView();
+		
+		//check if no error has occured
+		if (question == "the question couldn't be read") {
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			finish();
+		}
 		
 
 		answerButton1.setOnClickListener(new View.OnClickListener() {		

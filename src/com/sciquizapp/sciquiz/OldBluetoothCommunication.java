@@ -6,11 +6,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.UUID;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -21,15 +24,18 @@ import android.util.Log;
 import android.widget.Toast;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiManager;
 
-public class BluetoothCommunication {
+public class OldBluetoothCommunication {
 
 	//member variables
 	private Context mContext;
 	private IntentFilter mFilter;
 	private ArrayList<String> mMac_adress_list = new ArrayList<String>();
+	private ArrayList<BluetoothDevice> mDevices_list = new ArrayList<BluetoothDevice>(); 
 	private ArrayList<String> mUuids_list = new ArrayList<String>();
-	private String mDevices_list = "";
+//	private String mDevices_list = "";
 	private String mMasterAddress = "";
 	private BluetoothAdapter mBTAdapter = null;
 	private static BluetoothSocket mBTSocket = null;
@@ -40,6 +46,16 @@ public class BluetoothCommunication {
 	private String question_text_string = "";
 	// Well known SPP UUID
 	private static final UUID MY_UUID =	UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+
+	//member variables for the server part
+	private BluetoothServerSocket mmServerSocket;
+	private int MAX_NUMBER_OF_CLIENTS = 1;
+	private int number_of_clients = 0;
+	private OutputStream serverOutStream = null;
+	private ArrayList<OutputStream> serverOutStream_list;
+	private InputStream serverInStream = null;
+	private ArrayList<InputStream> serverInStream_list;
+	
 
 
 	// Create a BroadcastReceiver for ACTION_FOUND (for pairing and connecting without MAC address)
@@ -57,11 +73,12 @@ public class BluetoothCommunication {
 				//				device.fetchUuidsWithSdp();
 				// Add the name and address to an array adapter to show in a ListView
 				//				mDevices_list += device.getName() + "\t" + device.getAddress() + "\t" + device.getUuids().toString() + "\n";
-				//								Toast.makeText(mContext, device.getName() + "\t" + device.getAddress() + "\t" + device.getUuids(),
-				//										   Toast.LENGTH_LONG).show();
-				if (device.getUuids() != null && !mMac_adress_list.contains(device.getAddress())) {
-					mMac_adress_list.add(device.getAddress());
-				}
+				Toast.makeText(mContext, device.getName() + "\t" + device.getAddress() + "\t" + device.getUuids(),
+						Toast.LENGTH_LONG).show();
+				//				if (device.getUuids() != null && !mMac_adress_list.contains(device.getAddress())) {
+				mMac_adress_list.add(device.getAddress());
+				mDevices_list.add(device);
+				//				}
 				//			} else if(BluetoothDevice.ACTION_UUID.equals(action)) {
 				//		         BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 				//		         Parcelable[] uuidExtra = intent.getParcelableArrayExtra(BluetoothDevice.EXTRA_UUID);
@@ -79,8 +96,11 @@ public class BluetoothCommunication {
 	 * Constructor taking the activity context as argument
 	 * @param arg_context
 	 */
-	public BluetoothCommunication(Context arg_context) {
+	public OldBluetoothCommunication(Context arg_context) {
 		mContext = arg_context;
+		
+		WifiAccessManager.setWifiApState(arg_context, true);
+	
 	}
 
 	/**
@@ -90,6 +110,14 @@ public class BluetoothCommunication {
 	public BroadcastReceiver ConnectToBluetoothMaster(BluetoothAdapter arg_btAdapter) {
 		if (mClientIsConnected == false) {
 			mBTAdapter = arg_btAdapter;
+			
+			//rename device for making it recognizable by the computer for pairing
+			if (!mBTAdapter.getName().startsWith("prefix")) {
+				String new_name = mBTAdapter.getName();
+				new_name = "prefix" + new_name;
+				mBTAdapter.setName(new_name);
+			}
+			
 			// Register the BroadcastReceiver
 			mFilter = new IntentFilter();
 			mFilter.addAction(BluetoothDevice.ACTION_FOUND);
@@ -102,9 +130,14 @@ public class BluetoothCommunication {
 
 			mClientIsConnected = false;
 
+			//initialize arraylists
+			serverOutStream_list = new ArrayList<OutputStream>();
+			serverInStream_list = new ArrayList<InputStream>();
 
 			new Thread(new Runnable() {
 				public void run() {
+					//for pc as client test
+					StartBluetoothServer();
 					for (int i = 0; i < 12 && mClientIsConnected == false; i++) {
 						try {
 							Thread.sleep(1000);
@@ -112,8 +145,14 @@ public class BluetoothCommunication {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-						if (mMac_adress_list.size() > 0) {
-							ConnectToDeviceWithAddress(mMac_adress_list.get(0));
+						for (int j = 0; j < mMac_adress_list.size() &&mMac_adress_list.size() > 0; j++) {			//change to "for" if there are more device with uuids
+//							try {
+//								createBond(mDevices_list.get(j));
+//							} catch (Exception e1) {
+//								// TODO Auto-generated catch block
+//								e1.printStackTrace();
+//							}
+							ConnectToDeviceWithAddress(mMac_adress_list.get(j));
 							if (mClientIsConnected) {
 								InputStream inStream = null;
 								int current = 0;
@@ -128,11 +167,13 @@ public class BluetoothCommunication {
 									String response = new String(stringBuffer, "UTF-8");
 									if (!response.split("///")[0].equals("SERVER")) {
 										mBTSocket.close();
-									} else if (response.split("///")[0].equals("SERVER") && !response.split("///")[1].equals("OK")) {
+										//										StartBluetoothServer();
+									} else if (response.split("///")[0].equals("SERVER") && !response.split("///")[1].equals("OK")) {	//in this case, the device has to connect to another mobile device
+										mOutStream = mBTSocket.getOutputStream();
+										SendMacAddressToServer();
 										mBTSocket.close();
 										ConnectToDeviceWithAddress(response.split("///")[1]);
-									} else {
-										mOutStream = mBTSocket.getOutputStream();
+										StartBluetoothServer();
 										new Thread(new Runnable() {
 											public void run() {
 												while (true) {
@@ -142,6 +183,23 @@ public class BluetoothCommunication {
 													//launches question activity
 													launchQuestionActivity();
 												}
+											}
+										}).start();
+									} else {
+										mOutStream = mBTSocket.getOutputStream();
+										SendMacAddressToServer();
+										StartBluetoothServer();
+										new Thread(new Runnable() {
+											public void run() {
+												while (true) {
+													//reception of the question sent by the server per BT
+													questionReception();
+
+													//launches question activity
+													launchQuestionActivity();
+												}
+
+
 											}
 										}).start();
 									}
@@ -214,9 +272,14 @@ public class BluetoothCommunication {
 				Log.e("Fatal Error", "In onResume() and output stream creation failed:" + e.getMessage() + ".");
 			}
 
+			String MacAddress = android.provider.Settings.Secure.getString(mContext.getContentResolver(), "bluetooth_address");
+			DbHelper db_for_name = new DbHelper(mContext);
+			String name = db_for_name.getName();
+			answer = MacAddress + "///" + name + "///" + answer;
 			byte[] ansBuffer = answer.getBytes();
 			try {
 				mOutStream.write(ansBuffer);
+				mOutStream.flush();
 			} catch (IOException e) {
 				String msg = "In sendAnswerToServer() and an exception occurred during write: " + e.getMessage();
 				Log.e("Fatal Error", msg);       
@@ -231,12 +294,21 @@ public class BluetoothCommunication {
 	private void launchQuestionActivity() {
 		Intent mIntent = new Intent(mContext, SingleQuestionActivity.class);
 		Bundle bun = new Bundle();
-		bun.putString("question", question_text_string.split("///")[0]);
-		bun.putString("optA", question_text_string.split("///")[1]);
-		bun.putString("optB", question_text_string.split("///")[2]);
-		bun.putString("optC", question_text_string.split("///")[3]);
-		bun.putString("optD", question_text_string.split("///")[4]);
-		bun.putString("image_name", question_text_string.split("///")[5]);
+		if (question_text_string.length() > 0) {
+			bun.putString("question", question_text_string.split("///")[0]);
+			bun.putString("optA", question_text_string.split("///")[1]);
+			bun.putString("optB", question_text_string.split("///")[2]);
+			bun.putString("optC", question_text_string.split("///")[3]);
+			bun.putString("optD", question_text_string.split("///")[4]);
+			bun.putString("image_name", question_text_string.split("///")[5]);
+		} else {
+			bun.putString("question", "the question couldn't be read");
+			bun.putString("optA", "");
+			bun.putString("optB", "");
+			bun.putString("optC", "");
+			bun.putString("optD", "");
+			bun.putString("image_name", "");
+		}
 		//		bun.putParcelable("bluetoothSocket", btSocket);
 		//		bun.putParcelable("bluetoothObject", this);
 		mIntent.putExtras(bun);
@@ -253,14 +325,14 @@ public class BluetoothCommunication {
 			inStream = mBTSocket.getInputStream();
 
 			//reads the sizes of the text and of the imagefile
-			byte[] stringBuffer = new byte[20];
+			byte[] headerBuffer = new byte[20];
 			int sizeRead = 0;
 			do {
-				sizeRead = inStream.read(stringBuffer, current, (20 - current));
+				sizeRead = inStream.read(headerBuffer, current, (20 - current));
 				if(sizeRead >= 0) current += sizeRead;
 			} while(sizeRead > 0);    //shall be sizeRead > -1, because .read returns -1 when finished reading, but outstream not closed on server side
 
-			String string_sizes = new String(stringBuffer, "UTF-8");
+			String string_sizes = new String(headerBuffer, "UTF-8");
 			String string_file_size = string_sizes.split(":")[0];
 			String string_text_size = string_sizes.split(":")[1];
 			int text_size = Integer.parseInt(string_text_size.replaceAll("[\\D]", ""));
@@ -290,6 +362,13 @@ public class BluetoothCommunication {
 			//			picture = (ImageView)findViewById(R.id.imageview);
 			//			picture.setImageBitmap(bitmap);		
 			SaveImageFile(bitmap, question_text_string.split("///")[5]);
+
+			//forward the Buffer to the clients
+			for (int i = 0; i < 20 ; i++) {
+				inputBuffer[i] = headerBuffer[i];
+			}
+			ForwardDataToClients(inputBuffer);
+
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -317,5 +396,129 @@ public class BluetoothCommunication {
 			e.printStackTrace();
 		}
 	}
+	/**
+	 * method to start a bluetooth server
+	 */
+	private void StartBluetoothServer() {
+		BluetoothServerSocket tmp = null;
 
+		// Create a new listening server socket
+		try {
+			tmp = mBTAdapter.listenUsingRfcommWithServiceRecord("Android Master", MY_UUID);
+		} catch (IOException e) {
+			Log.e("Starting bluetooth server", "listen() failed", e);
+		}
+		mmServerSocket = tmp;
+
+		byte[] pinBytes = "0000".getBytes();
+
+	          Method m;
+			try {
+				m = mBTAdapter.getClass().getMethod("setPin", byte[].class);
+				try {
+					m.invoke(mBTAdapter, pinBytes);
+				} catch (IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IllegalArgumentException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			} catch (NoSuchMethodException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+	          
+	          
+		new Thread(new Runnable() {
+			public void run() {
+				while (number_of_clients < MAX_NUMBER_OF_CLIENTS) {
+					BluetoothSocket socket = null;
+					while (true) {
+						try {
+							socket = mmServerSocket.accept();
+							serverOutStream = socket.getOutputStream();
+							serverOutStream_list.add(serverOutStream);
+							serverInStream = socket.getInputStream();
+							PipeClientToMaster(serverInStream);
+							serverInStream_list.add(serverInStream);
+							number_of_clients++;
+						} catch (IOException e) {
+							break;
+						}
+						if (socket != null) {
+							try {
+								mmServerSocket.close();
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+							break;
+						}
+					}
+				}
+			}
+		}).start();
+	}
+
+	/**
+	 *  method that sends some data to all clients
+	 * @param data_to_forward
+	 */
+	private void ForwardDataToClients(final byte[] data_to_forward) {
+		//		new Thread(new Runnable() {
+		//			public void run() {
+		for (int i = 0; i < serverOutStream_list.size(); i++) {
+			try {
+				serverOutStream_list.get(i).write(data_to_forward);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		//			}
+		//		}).start();
+	}
+	/**
+	 * method that  sends some data to the master
+	 * @param data_to_forward
+	 */
+	private void PipeClientToMaster(InputStream inStreamFromClient) {
+		byte[] buffer = new byte[1024]; // Adjust if you want
+		int bytesRead;
+		try {
+//			while ((bytesRead = inStreamFromClient.read(buffer)) > 0)
+//			{
+//				mOutStream.write(buffer, 0, bytesRead);
+//			}
+			bytesRead = inStreamFromClient.read(buffer);
+			mOutStream.write(buffer, 0, bytesRead);
+			mOutStream.flush();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	/**
+	 * method which sends the MAC address of the device to the PC server
+	 */
+	private void SendMacAddressToServer() {
+		//the \n added at the end of the address is used to mark the end of the string to read because the server uses .readline()
+		String MacAddress = android.provider.Settings.Secure.getString(mContext.getContentResolver(), "bluetooth_address") + "\n"; 
+		byte[] msgBuffer = MacAddress.getBytes();
+		try {
+			mOutStream.write(msgBuffer);
+			mOutStream.flush();
+		} catch (IOException e) {
+			Log.e("In onResume() and an exception occurred during write: ", e.getMessage());
+		}
+	}
+//	public boolean createBond(BluetoothDevice btDevice) throws Exception { 
+//		Class class1 = Class.forName("android.bluetooth.BluetoothDevice");
+//		Method createBondMethod = class1.getMethod("createBond");  
+//		Boolean returnValue = (Boolean) createBondMethod.invoke(btDevice);  
+//		return returnValue.booleanValue();  
+//	} 
 }
